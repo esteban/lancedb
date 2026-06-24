@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Clock</title>
+  <style>
+    :root {
+      --bg: #0a0e14;
+      --glow: #00e5ff;
+      --dim: rgba(0, 229, 255, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      background: radial-gradient(circle at 50% 40%, #131a26 0%, var(--bg) 70%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--glow);
+      overflow: hidden;
+    }
+
+    .clock {
+      display: flex;
+      align-items: baseline;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .time {
+      font-size: clamp(3.5rem, 20vw, 16rem);
+      font-family: "SF Mono", "Consolas", "Menlo", monospace;
+      text-shadow:
+        0 0 10px var(--glow),
+        0 0 30px rgba(0, 229, 255, 0.6),
+        0 0 60px rgba(0, 229, 255, 0.35);
+    }
+
+    .colon {
+      animation: blink 1s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.25; }
+    }
+
+    .ampm {
+      font-size: clamp(1rem, 4vw, 3rem);
+      margin-left: 0.4em;
+      opacity: 0.8;
+    }
+
+    .date {
+      margin-top: 1.5rem;
+      font-size: clamp(1rem, 3.5vw, 2rem);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      opacity: 0.75;
+      text-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+    }
+
+    .toggle {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--dim);
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      color: var(--glow);
+      padding: 0.6rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+
+    .toggle:hover { background: rgba(0, 229, 255, 0.25); }
+  </style>
+</head>
+<body>
+  <div class="clock">
+    <span class="time" id="time">00:00:00</span>
+    <span class="ampm" id="ampm"></span>
+  </div>
+  <div class="date" id="date"></div>
+
+  <button class="toggle" id="toggle">24-hour</button>
+
+  <script>
+    const timeEl = document.getElementById("time");
+    const ampmEl = document.getElementById("ampm");
+    const dateEl = document.getElementById("date");
+    const toggleBtn = document.getElementById("toggle");
+
+    let use24Hour = true;
+
+    const pad = (n) => String(n).padStart(2, "0");
+
+    function render() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+
+      let suffix = "";
+      if (!use24Hour) {
+        suffix = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+      }
+
+      const h = use24Hour ? pad(hours) : String(hours);
+      timeEl.innerHTML =
+        `${h}<span class="colon">:</span>${pad(minutes)}<span class="colon">:</span>${pad(seconds)}`;
+      ampmEl.textContent = suffix;
+
+      dateEl.textContent = now.toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+    function tick() {
+      render();
+      // Re-sync to the start of the next second to avoid drift.
+      const delay = 1000 - (Date.now() % 1000);
+      setTimeout(tick, delay);
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      use24Hour = !use24Hour;
+      toggleBtn.textContent = use24Hour ? "24-hour" : "12-hour";
+      render();
+    });
+
+    tick();
+  </script>
+</body>
+</html>
